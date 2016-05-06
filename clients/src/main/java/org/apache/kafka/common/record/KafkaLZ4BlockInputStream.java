@@ -25,6 +25,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import net.jpountz.lz4.LZ4Exception;
 import org.apache.kafka.common.record.KafkaLZ4BlockOutputStream.BD;
 import org.apache.kafka.common.record.KafkaLZ4BlockOutputStream.FLG;
 import org.apache.kafka.common.utils.Utils;
@@ -180,7 +181,11 @@ public final class KafkaLZ4BlockInputStream extends FilterInputStream {
         }
 
         if (compressed) {
-            bufferSize = decompressor.decompress(compressedBuffer, 0, blockSize, buffer, 0, maxBlockSize);
+            try {
+                bufferSize = decompressor.decompress(compressedBuffer, 0, blockSize, buffer, 0, maxBlockSize);
+            } catch (LZ4Exception e) {
+                throw new IOException(e);
+            }
         }
 
         bufferOffset = 0;
