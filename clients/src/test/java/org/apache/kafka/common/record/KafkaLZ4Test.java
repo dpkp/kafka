@@ -35,17 +35,16 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-
 @RunWith(value = Parameterized.class)
 public class KafkaLZ4Test {
 
-    private boolean useBrokenHC;
-    private boolean ignoreHC;
-    private byte[] payload;
+    private final boolean useBrokenFlagDescriptorChecksum;
+    private final boolean ignoreFlagDescriptorChecksum;
+    private final byte[] payload;
 
-    public KafkaLZ4Test(boolean useBrokenHC, boolean ignoreHC, byte[] payload) {
-        this.useBrokenHC = useBrokenHC;
-        this.ignoreHC = ignoreHC;
+    public KafkaLZ4Test(boolean useBrokenFlagDescriptorChecksum, boolean ignoreFlagDescriptorChecksum, byte[] payload) {
+        this.useBrokenFlagDescriptorChecksum = useBrokenFlagDescriptorChecksum;
+        this.ignoreFlagDescriptorChecksum = ignoreFlagDescriptorChecksum;
         this.payload = payload;
     }
 
@@ -63,7 +62,7 @@ public class KafkaLZ4Test {
     @Test
     public void testKafkaLZ4() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        KafkaLZ4BlockOutputStream lz4 = new KafkaLZ4BlockOutputStream(output, this.useBrokenHC);
+        KafkaLZ4BlockOutputStream lz4 = new KafkaLZ4BlockOutputStream(output, this.useBrokenFlagDescriptorChecksum);
         lz4.write(this.payload, 0, this.payload.length);
         lz4.flush();
         byte[] compressed = output.toByteArray();
@@ -114,7 +113,7 @@ public class KafkaLZ4Test {
 
         // Initial implementation of checksum incorrectly applied to full header
         // including magic bytes
-        if (this.useBrokenHC) {
+        if (this.useBrokenFlagDescriptorChecksum) {
             off = 0;
             len = offset;
         }
@@ -126,13 +125,13 @@ public class KafkaLZ4Test {
 
         ByteArrayInputStream input = new ByteArrayInputStream(compressed);
         try {
-            KafkaLZ4BlockInputStream decompressed = new KafkaLZ4BlockInputStream(input, this.ignoreHC);
+            KafkaLZ4BlockInputStream decompressed = new KafkaLZ4BlockInputStream(input, this.ignoreFlagDescriptorChecksum);
             byte[] testPayload = new byte[this.payload.length];
             int ret = decompressed.read(testPayload, 0, this.payload.length);
             assertEquals(ret, this.payload.length);
             assertArrayEquals(this.payload, testPayload);
         } catch (IOException e) {
-            assertTrue(this.useBrokenHC && !this.ignoreHC);
+            assertTrue(this.useBrokenFlagDescriptorChecksum && !this.ignoreFlagDescriptorChecksum);
         }
     }
 }

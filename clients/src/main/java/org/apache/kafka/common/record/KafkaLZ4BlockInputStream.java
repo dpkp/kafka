@@ -51,7 +51,7 @@ public final class KafkaLZ4BlockInputStream extends FilterInputStream {
     private final byte[] buffer;
     private final byte[] compressedBuffer;
     private final int maxBlockSize;
-    private final boolean ignoreHC;
+    private final boolean ignoreFlagDescriptorChecksum;
     private FLG flg;
     private BD bd;
     private int bufferOffset;
@@ -69,7 +69,7 @@ public final class KafkaLZ4BlockInputStream extends FilterInputStream {
         super(in);
         decompressor = LZ4Factory.fastestInstance().safeDecompressor();
         checksum = XXHashFactory.fastestInstance().hash32();
-        ignoreHC = ignoreFlagDescriptorChecksum;
+        this.ignoreFlagDescriptorChecksum = ignoreFlagDescriptorChecksum;
         readHeader();
         maxBlockSize = bd.getBlockMaximumSize();
         buffer = new byte[maxBlockSize];
@@ -94,8 +94,8 @@ public final class KafkaLZ4BlockInputStream extends FilterInputStream {
      * Frame Descriptor checksum, which is useful for compatibility with
      * old client implementations that use incorrect checksum calculations.
      */
-    public boolean getIgnoreHC() {
-        return this.ignoreHC;
+    public boolean ignoreFlagDescriptorChecksum() {
+        return this.ignoreFlagDescriptorChecksum;
     }
 
     /**
@@ -128,7 +128,7 @@ public final class KafkaLZ4BlockInputStream extends FilterInputStream {
         header[headerOffset++] = (byte) in.read();
 
         // Old implementations produced incorrect HC checksums
-        if (ignoreHC)
+        if (ignoreFlagDescriptorChecksum)
             return;
 
         int offset = 4;

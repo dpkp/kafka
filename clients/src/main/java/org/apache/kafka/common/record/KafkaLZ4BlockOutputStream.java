@@ -48,7 +48,7 @@ public final class KafkaLZ4BlockOutputStream extends FilterOutputStream {
 
     private final LZ4Compressor compressor;
     private final XXHash32 checksum;
-    private final boolean useBrokenHC;
+    private final boolean useBrokenFlagDescriptorChecksum;
     private final FLG flg;
     private final BD bd;
     private final byte[] buffer;
@@ -65,15 +65,15 @@ public final class KafkaLZ4BlockOutputStream extends FilterOutputStream {
      *            values will generate an exception
      * @param blockChecksum Default: false. When true, a XXHash32 checksum is computed and appended to the stream for
      *            every block of data
-     * @param useBrokenHC Default: false. When true, writes an incorrect FrameDescriptor checksum compatible with
-     *            older kafka clients.
+     * @param useBrokenFlagDescriptorChecksum Default: false. When true, writes an incorrect FrameDescriptor checksum
+     *            compatible with older kafka clients.
      * @throws IOException
      */
-    public KafkaLZ4BlockOutputStream(OutputStream out, int blockSize, boolean blockChecksum, boolean writeMessageV0HC) throws IOException {
+    public KafkaLZ4BlockOutputStream(OutputStream out, int blockSize, boolean blockChecksum, boolean useBrokenFlagDescriptorChecksum) throws IOException {
         super(out);
         compressor = LZ4Factory.fastestInstance().fastCompressor();
         checksum = XXHashFactory.fastestInstance().hash32();
-        useBrokenHC = writeMessageV0HC;
+        this.useBrokenFlagDescriptorChecksum = useBrokenFlagDescriptorChecksum;
         bd = new BD(blockSize);
         flg = new FLG(blockChecksum);
         bufferOffset = 0;
@@ -129,8 +129,8 @@ public final class KafkaLZ4BlockOutputStream extends FilterOutputStream {
      * incorrect Frame Descriptor checksum, which is useful for
      * compatibility with old client implementations.
      */
-    public boolean getUseBrokenHC() {
-        return this.useBrokenHC;
+    public boolean useBrokenFlagDescriptorChecksum() {
+        return this.useBrokenFlagDescriptorChecksum;
     }
 
     /**
@@ -148,7 +148,7 @@ public final class KafkaLZ4BlockOutputStream extends FilterOutputStream {
         // compute checksum on all descriptor fields
         int offset = 4;
         int len = bufferOffset - offset;
-        if (this.useBrokenHC) {
+        if (this.useBrokenFlagDescriptorChecksum) {
             len += offset;
             offset = 0;
         }

@@ -31,19 +31,19 @@ class MessageCompressionTest extends JUnitSuite {
   @Test
   def testLZ4FramingV0() {
     val output = CompressionFactory(LZ4CompressionCodec, Message.MagicValue_V0, new ByteArrayOutputStream())
-    assertTrue(output.asInstanceOf[KafkaLZ4BlockOutputStream].getUseBrokenHC())
+    assertTrue(output.asInstanceOf[KafkaLZ4BlockOutputStream].useBrokenFlagDescriptorChecksum())
 
     val input = CompressionFactory(LZ4CompressionCodec, Message.MagicValue_V0, new ByteArrayInputStream(Array[Byte](0x04, 0x22, 0x4D, 0x18, 0x60, 0x40, 0x1A)))
-    assertTrue(input.asInstanceOf[KafkaLZ4BlockInputStream].getIgnoreHC())
+    assertTrue(input.asInstanceOf[KafkaLZ4BlockInputStream].ignoreFlagDescriptorChecksum())
   }
 
   @Test
   def testLZ4FramingV1() {
     val output = CompressionFactory(LZ4CompressionCodec, Message.MagicValue_V1, new ByteArrayOutputStream())
-    assertFalse(output.asInstanceOf[KafkaLZ4BlockOutputStream].getUseBrokenHC())
+    assertFalse(output.asInstanceOf[KafkaLZ4BlockOutputStream].useBrokenFlagDescriptorChecksum())
 
     val input = CompressionFactory(LZ4CompressionCodec, Message.MagicValue_V1, new ByteArrayInputStream(Array[Byte](0x04, 0x22, 0x4D, 0x18, 0x60, 0x40, -126)))
-    assertFalse(input.asInstanceOf[KafkaLZ4BlockInputStream].getIgnoreHC())
+    assertFalse(input.asInstanceOf[KafkaLZ4BlockInputStream].ignoreFlagDescriptorChecksum())
   }
 
   @Test
