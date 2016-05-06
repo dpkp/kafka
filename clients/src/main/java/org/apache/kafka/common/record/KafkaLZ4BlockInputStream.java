@@ -133,7 +133,9 @@ public final class KafkaLZ4BlockInputStream extends FilterInputStream {
 
         int offset = 4;
         int len = headerOffset - offset - 1; // dont include magic bytes or HC
-        assert len >= 2 && len <= 10 : "Checksum: Invalid FrameDescriptor size";
+        if (len < 2 || len > 10)
+            throw new AssertionError("Checksum: Invalid FrameDescriptor size");
+
         byte hash = (byte) ((checksum.hash(header, offset, len, 0) >> 8) & 0xFF);
         if (hash != header[headerOffset - 1])
             throw new IOException(DESCRIPTOR_HASH_MISMATCH);
